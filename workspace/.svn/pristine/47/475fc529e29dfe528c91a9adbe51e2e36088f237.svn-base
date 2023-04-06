@@ -1,0 +1,166 @@
+﻿using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+
+namespace Draw
+{
+	/// <summary>
+	/// Класът, който ще бъде използван при управляване на диалога.
+	/// </summary>
+	public class DialogProcessor : DisplayProcessor
+	{
+		#region Constructor
+		
+		public DialogProcessor()
+		{
+		}
+		
+		#endregion
+		
+		#region Properties
+		
+		/// <summary>
+		/// Избран елемент.
+		/// </summary>
+		private Shape selection;
+		public Shape Selection {
+			get { return selection; }
+			set { selection = value; }
+		}
+		
+		/// <summary>
+		/// Дали в момента диалога е в състояние на "влачене" на избрания елемент.
+		/// </summary>
+		private bool isDragging;
+		public bool IsDragging {
+			get { return isDragging; }
+			set { isDragging = value; }
+		}
+		
+		/// <summary>
+		/// Последна позиция на мишката при "влачене".
+		/// Използва се за определяне на вектора на транслация.
+		/// </summary>
+		private PointF lastLocation;
+		public PointF LastLocation {
+			get { return lastLocation; }
+			set { lastLocation = value; }
+		}
+		
+		
+		#endregion
+		
+		public void AddRandomRectangle()
+		{
+			AddRectangle(200,100);
+			
+		}
+		
+		public void AddRandomSquare()
+		{
+			
+			AddRectangle(150,150);
+			
+		}
+		
+		public void AddRectangle(int height, int width)
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100,1000);
+			int y = rnd.Next(100,800);
+			RectangleShape rect;
+			
+			if(height == width) rect = new RectangleShape(new Rectangle(x,y,height,width));
+			else rect = new RectangleShape(new Rectangle(x,y,height,width));
+			
+			rect.StrokeColor = Color.Red;
+			rect.FillColor = Color.White;
+			rect.PenWidth = 3;
+			rect.ShapeBrush = new SolidBrush(rect.FillColor);
+			rect.ShapePen = new Pen(rect.StrokeColor, rect.PenWidth);
+			ShapeList.Add(rect);
+		}
+		
+		public void AddRandomEllipse()
+		{
+			
+			Random rnd = new Random();
+			int x = rnd.Next(100,1000);
+			int y = rnd.Next(100,800);
+			
+			EllipseShape ellipse = new EllipseShape(new Rectangle(x,y,100,200));
+			ellipse.FillColor = Color.FromArgb(125, 0, 0, 255);
+			ellipse.StrokeColor = Color.Green; 
+			ellipse.PenWidth = 3;
+			ellipse.ShapeBrush = new SolidBrush(ellipse.FillColor);
+			ellipse.ShapePen = new Pen(ellipse.StrokeColor, ellipse.PenWidth);
+			ShapeList.Add(ellipse);
+		}
+		public void AddRandomLine(){
+			LineShape line = new LineShape();
+			Random rnd = new Random();
+			line.Location = new PointF(rnd.Next(100,1000), rnd.Next(100,800));
+			line.Location2 = new PointF(rnd.Next(100,1000), rnd.Next(100, 800));
+			line.FillColor = Color.DarkBlue;
+			line.PenWidth = 3;
+			ShapeList.Add(line);                           
+		}
+
+		public void AddRandomCircle()
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 600);
+
+			CircleShape circle = new CircleShape(new Rectangle(x, y, 200, 200));
+			
+			circle.FillColor = Color.Blue;
+			circle.StrokeColor = Color.Yellow;
+			circle.StrokeWidth = 4;
+			ShapeList.Add(circle);
+		}
+		public Shape ContainsPoint(PointF point)
+		{
+			for(int i = ShapeList.Count - 1; i >= 0; i--){
+				if (ShapeList[i].Contains(point)){
+					ShapeList[i].FillColor = Color.Red;
+						
+					return ShapeList[i];
+				}	
+			}
+			return null;
+		}
+		
+		/// <summary>
+		/// Транслация на избраният елемент на вектор определен от <paramref name="p>p</paramref>
+		/// </summary>
+		/// <param name="p">Вектор на транслация.</param>
+		public void TranslateTo(PointF p)
+		{
+			if (selection != null) {
+				selection.Location = new PointF(selection.Location.X + p.X - lastLocation.X, selection.Location.Y + p.Y - lastLocation.Y);
+				if(selection.Location2 != null) 
+					selection.Location2 = new PointF(selection.Location2.X + p.X - lastLocation.X, selection.Location2.Y + p.Y - lastLocation.Y);
+				lastLocation = p;
+			}
+		}
+		/// <summary>
+		/// Завъртане на примитива
+		/// </summary>
+		public void Rotate()
+		{
+			if (selection.ShapeAngle != null)
+			{
+				if (Selection.ShapeAngle != 315)
+				{
+					Selection.ShapeAngle += 45;
+				}
+				else
+				{
+					Selection.ShapeAngle = 0;
+				}
+			}
+
+		}
+	}
+}

@@ -1,0 +1,55 @@
+﻿
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+
+namespace Draw
+{
+	[Serializable]
+	public class LineShape : Shape
+	{
+
+		public LineShape(RectangleF lineSha) : base(lineSha)
+		{
+
+		}
+
+		public LineShape(LineShape line) : base(line)
+		{
+
+		}
+
+		public override bool Contains(PointF point)
+		{
+			float x = point.X;
+			float y = point.Y;
+
+			//rx is semi-major axis
+			//ry is semi-minor axis
+			float rx = Width / 2;
+			float ry = Height / 2;
+
+			//Center point
+			float centerX = Location.X + rx;
+			float centerY = Location.Y + ry;
+
+			//?
+			bool onLine =  Math.Pow((x - centerX) / rx, 2) + Math.Pow((y - centerY) / ry, 2) - StrokeWidth <= 0;
+			return onLine;
+		}
+		public override void DrawSelf(Graphics grfx)
+		{
+		
+			base.DrawSelf(grfx);
+			base.RotateShape(grfx);
+			//първия край на линията
+			PointF LeftTopPoint = new PointF(Rectangle.X, Rectangle.Y);
+			//втория край на линията
+			PointF RightBottomPoint = new PointF(Rectangle.X + Rectangle.Width, Rectangle.Y + Rectangle.Width);
+			grfx.DrawLine(new Pen(this.FillColor, StrokeWidth), LeftTopPoint, RightBottomPoint);
+			grfx.ResetTransform();
+
+		}
+		
+	}
+}

@@ -1,0 +1,454 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.IO;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Windows.Forms;
+
+namespace Draw
+{
+	/// <summary>
+	/// Класът, който ще бъде използван при управляване на диалога.
+	/// </summary>
+	public class DialogProcessor : DisplayProcessor
+	{
+		#region Constructor
+		
+		public DialogProcessor()
+		{
+		}
+		
+		#endregion
+		
+		#region Properties
+		
+		/// <summary>
+		/// Избран елемент.
+		/// </summary>
+		private List<Shape> selection=new List<Shape>();
+		public List<Shape> Selection {
+			get { return selection; }
+			set { selection = value; }
+		}
+		
+		/// <summary>
+		/// Дали в момента диалога е в състояние на "влачене" на избрания елемент.
+		/// </summary>
+		private bool isDragging;
+		public bool IsDragging {
+			get { return isDragging; }
+			set { isDragging = value; }
+		}
+		
+		/// <summary>
+		/// Последна позиция на мишката при "влачене".
+		/// Използва се за определяне на вектора на транслация.
+		/// </summary>
+		private PointF lastLocation;
+		public PointF LastLocation {
+			get { return lastLocation; }
+			set { lastLocation = value; }
+		}
+		#endregion
+
+
+		public Color selectedFillColor = Color.Black;
+
+
+		public Color selectedStrokeColor = Color.Red;
+
+
+		public int selectedOpacityValue = 255;
+
+		public void AddRandomRectangle()
+		{
+			AddRectangle(200,100);
+			
+		}
+		
+		public void AddRandomSquare()
+		{
+			
+			AddRectangle(150,150);
+			
+		}
+
+		public void AddRandomTrapeze()
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 600);
+
+			TrapezeShape rect = new TrapezeShape(new Rectangle(x, y, 100, 200));
+
+			rect.FillColor = selectedFillColor;
+			rect.StrokeColor = selectedStrokeColor;
+			rect.Opacity = selectedOpacityValue;
+			rect.StrokeWidth = 3;
+
+			ShapeList.Add(rect);
+		}
+		public void AddRandomExam()
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 600);
+
+			ExamShape rect = new ExamShape(new Rectangle(x, y, 300, 100));
+
+			rect.FillColor = selectedFillColor;
+			rect.StrokeColor = selectedStrokeColor;
+			rect.Opacity = selectedOpacityValue;
+			rect.StrokeWidth = 3;
+
+			ShapeList.Add(rect);
+		}
+
+		public void AddRectangle(int height, int width)
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100,1000);
+			int y = rnd.Next(100,800);
+			RectangleShape rect;
+			
+			if(height == width) rect = new RectangleShape(new Rectangle(x,y,height,width));
+			else rect = new RectangleShape(new Rectangle(x,y,height,width));
+			
+			rect.StrokeColor = selectedStrokeColor;
+			rect.FillColor = selectedFillColor;
+			rect.StrokeWidth = 3;
+			rect.Opacity = selectedOpacityValue;
+		
+			ShapeList.Add(rect);
+		}
+		
+		public void AddRandomEllipse()
+		{
+			
+			Random rnd = new Random();
+			int x = rnd.Next(100,1000);
+			int y = rnd.Next(100,800);
+			
+			EllipseShape ellipse = new EllipseShape(new Rectangle(x,y,100,200));
+			ellipse.FillColor = selectedFillColor;
+			ellipse.StrokeColor = selectedStrokeColor; 
+			ellipse.StrokeWidth = 3;
+			ellipse.Opacity = selectedOpacityValue;
+			ShapeList.Add(ellipse);
+		}
+		
+		public void AddRandomCircle()
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 800);
+
+			CircleShape circle = new CircleShape(new Rectangle(x, y, 200, 200));
+			
+			circle.FillColor = selectedFillColor;
+			circle.StrokeColor = selectedStrokeColor;
+			circle.StrokeWidth = 4;
+			circle.Opacity = selectedOpacityValue;
+			ShapeList.Add(circle);
+		}
+
+		public void AddRandomLine()
+		{
+
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 800);
+
+			LineShape newLine = new LineShape(new Rectangle(x, y, 300, 300));
+			newLine.Opacity = selectedOpacityValue;
+			newLine.FillColor = Color.FromArgb(newLine.Opacity, selectedFillColor);
+			newLine.StrokeWidth = 3;
+			ShapeList.Add(newLine);
+		}
+
+		public void AddRandomPoint()
+        {
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 800);
+			PointShape p = new PointShape(new Rectangle(x, y, 5, 5));
+			p.Opacity = selectedOpacityValue;
+			p.FillColor = selectedFillColor;
+			ShapeList.Add(p);
+
+		}
+
+		public Shape ContainsPoint(PointF point)
+		{
+			for (int i = ShapeList.Count - 1; i >= 0; i--) {
+				if (ShapeList[i].Contains(point)) {
+                    foreach (var item in Selection)
+                    {
+						if (item.Contains(point))
+						{
+							
+							ShapeList[i].StrokeColor = selectedStrokeColor;
+							return ShapeList[i];
+						}
+                    }
+					ShapeList[i].StrokeColor = Color.YellowGreen;
+					return ShapeList[i];
+					
+				}
+				
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Транслация на избраният елемент на вектор определен от <paramref name="p>p</paramref>
+		/// </summary>
+		/// <param name="p">Вектор на транслация.</param>
+		public void TranslateTo(PointF p)
+		{
+			foreach (var item in Selection)
+			{
+				item.Move(p.X - lastLocation.X, p.Y - lastLocation.Y);
+			}
+			lastLocation = p;
+		}
+		/// <summary>
+		/// Завъртане на примитива
+		/// </summary>
+		/// 
+		public void GroupSelected()
+		{
+			if (Selection.Count < 2) return;
+			float minX = float.MaxValue; // top left point (X)
+			float minY = float.MaxValue; //top left point (Y)
+			float maxX = float.MinValue; // top right point
+			float maxY = float.MinValue; //bottom left point
+			foreach (var item in Selection)
+			{
+				if (minX > item.Location.X)
+				{
+					minX = item.Location.X;
+				}
+				if (minY > item.Location.Y)
+				{
+					minY = item.Location.Y;
+				}
+				if (maxX < item.Location.X + item.Width)
+				{
+					maxX = item.Location.X + item.Width;
+				}
+				if (maxY < item.Location.Y + item.Height)
+				{
+					maxY = item.Location.Y + item.Height;
+				}
+			}
+			var group = new GroupShape(new RectangleF(minX, minY, maxX - minX, maxY - minY));
+			group.SubShape = Selection;
+			foreach (var item in Selection)
+			{
+				ShapeList.Remove(item);
+			}
+			Selection = new List<Shape>();
+			Selection.Add(group);
+			ShapeList.Add(group);
+		}
+		public void UngroupSelected()
+		{
+			List<Shape> AllShapesGroup = new List<Shape>();
+			foreach (GroupShape groupShape in Selection.ToList())
+			{
+				foreach (var item in groupShape.SubShape)
+				{
+					AllShapesGroup.Add(item);
+				}
+				groupShape.SubShape.Clear();
+				ShapeList.Remove(groupShape);
+				Selection.Remove(groupShape);
+				foreach (var item in AllShapesGroup)
+				{
+					Selection.Remove(item);
+					ShapeList.Add(item);
+				}
+			}
+		}
+		
+		public void Rotate(float angle)
+		{
+			if (Selection.Count != 0)
+			{
+				foreach (var item in Selection)
+				{
+					if (item.GetType().Equals(typeof(GroupShape)))
+					{
+						((GroupShape)item).GroupRotate(angle);
+					}
+					item.ShapeAngle+= angle;
+
+				}
+			}
+			else
+			{
+				MessageBox.Show("Please select an element to rotate.");
+			}
+
+		}
+
+		public void Rotate180()
+        {
+			Rotate(180);
+        }
+		public void Resize(float width, float height)
+        {
+			foreach (var item in Selection)
+
+			{
+				if (width > -1)
+				{
+					if (item.GetType().Equals(typeof(GroupShape)))
+					{
+						((GroupShape)item).GroupResizeWidth(width);
+					}
+					else
+					{
+						item.Width = width;
+					}
+				}
+				if (height > -1)
+				{
+					if (item.GetType().Equals(typeof(GroupShape)))
+					{
+						((GroupShape)item).GroupResizeHeight(height);
+					}
+					else
+					{
+						item.Height = height;
+					}
+				}
+			}
+		}
+		public void DeleteSelectedShapes()
+		{
+			foreach (Shape shape in Selection)
+			{
+				ShapeList.Remove(shape);
+
+			}
+			Selection.Clear();
+		}
+
+		public void GroupOpacity(int opacValue)
+        {
+			foreach (var item in Selection)
+
+			{
+				if (item.GetType().Equals(typeof(GroupShape)))
+				{
+					((GroupShape)item).GroupOpacity(opacValue);
+				}
+				item.Opacity = opacValue;
+
+			}
+		}
+
+		public void SelectAll()
+        {
+			Selection.Clear();
+			foreach (var item in ShapeList)
+            {
+				item.StrokeColor = Color.YellowGreen;
+				Selection.Add(item);
+            }	
+        }
+
+		public void UnselectAll()
+		{
+			
+			foreach (var item in ShapeList)
+			{
+				item.StrokeColor = selectedStrokeColor;
+			}
+			Selection.Clear();
+		}
+
+		public void SetStrokeColor(Color color)
+        {
+			foreach(var item in Selection)
+            {
+                if (item.GetType().Equals(typeof(GroupShape))){
+					((GroupShape)item).GroupStrokeColor(color);
+				}
+            }
+        }
+		public void SetFillColor(Color color)
+		{
+			foreach (var item in Selection)
+			{
+				if (item.GetType().Equals(typeof(GroupShape))){
+					((GroupShape)item).GroupFillColor(color);
+				}
+			
+				
+			}
+		}
+
+		public void SerializeIt(object item, string path = null)
+		{
+			IFormatter formatter = new BinaryFormatter();
+			Stream stream;
+			if (path != null)
+			{
+				stream = new FileStream(path + ".bin",
+								  FileMode.Create);
+			}
+			else
+			{
+				stream = new FileStream("Drawing.bin",
+										FileMode.Create,
+										FileAccess.Write, FileShare.None);
+			}
+			formatter.Serialize(stream, item);
+			stream.Close();
+		}
+
+		public object DeserializeIt(string path = null)
+		{
+			object item;
+			IFormatter formatter = new BinaryFormatter();
+			Stream stream;
+			if (path != null)
+			{
+				stream = new FileStream(path,
+									 FileMode.Open,
+									 FileAccess.Read, FileShare.None);
+			}
+			else
+			{
+				stream = new FileStream("Drawing.bin",
+									FileMode.Open);
+			}
+			item = formatter.Deserialize(stream);
+			stream.Close();
+			return item;
+		}
+
+		public void Copy()
+		{
+			SerializeIt(Selection);
+		}
+		public void Paste()
+        {
+			try
+			{
+				List<Shape> x = (List<Shape>)DeserializeIt();
+				ShapeList.AddRange(x);
+			}
+			catch (Exception e)
+			{
+
+			}
+		}
+	}
+}

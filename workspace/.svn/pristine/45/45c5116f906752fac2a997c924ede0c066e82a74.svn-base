@@ -1,0 +1,216 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+
+namespace Draw
+{
+	/// <summary>
+	/// Класът, който ще бъде използван при управляване на диалога.
+	/// </summary>
+	public class DialogProcessor : DisplayProcessor
+	{
+		#region Constructor
+		
+		public DialogProcessor()
+		{
+		}
+		
+		#endregion
+		
+		#region Properties
+		
+		/// <summary>
+		/// Избран елемент.
+		/// </summary>
+		private List<Shape> selection=new List<Shape>();
+		public List<Shape> Selection {
+			get { return selection; }
+			set { selection = value; }
+		}
+		
+		/// <summary>
+		/// Дали в момента диалога е в състояние на "влачене" на избрания елемент.
+		/// </summary>
+		private bool isDragging;
+		public bool IsDragging {
+			get { return isDragging; }
+			set { isDragging = value; }
+		}
+		
+		/// <summary>
+		/// Последна позиция на мишката при "влачене".
+		/// Използва се за определяне на вектора на транслация.
+		/// </summary>
+		private PointF lastLocation;
+		public PointF LastLocation {
+			get { return lastLocation; }
+			set { lastLocation = value; }
+		}
+
+
+		#endregion
+
+
+		
+		public Color selectedFillColor = Color.Black;
+
+		public Color selectedStrokeColor = Color.Red;
+
+		public int selectedOpacityValue = 255;
+
+		public void AddRandomRectangle()
+		{
+			AddRectangle(200,100);
+			
+		}
+		
+		public void AddRandomSquare()
+		{
+			
+			AddRectangle(150,150);
+			
+		}
+		public void AddRandomTrapeze()
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 600);
+
+			TrapezeShape rect = new TrapezeShape(new Rectangle(x, y, 100, 200));
+
+			rect.FillColor = selectedFillColor;
+			rect.StrokeColor = selectedStrokeColor;
+			rect.Opacity = selectedOpacityValue;
+			rect.StrokeWidth = 3;
+
+			ShapeList.Add(rect);
+		}
+		public void AddRectangle(int height, int width)
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100,1000);
+			int y = rnd.Next(100,800);
+			RectangleShape rect;
+			
+			if(height == width) rect = new RectangleShape(new Rectangle(x,y,height,width));
+			else rect = new RectangleShape(new Rectangle(x,y,height,width));
+			
+			rect.StrokeColor = selectedStrokeColor;
+			rect.FillColor = selectedFillColor;
+			rect.StrokeWidth = 3;
+			rect.Opacity = selectedOpacityValue;
+			rect.ShapeBrush = new SolidBrush(Color.FromArgb(rect.Opacity, rect.FillColor));
+			rect.ShapePen = new Pen(rect.StrokeColor, rect.StrokeWidth);
+			ShapeList.Add(rect);
+		}
+		
+		public void AddRandomEllipse()
+		{
+			
+			Random rnd = new Random();
+			int x = rnd.Next(100,1000);
+			int y = rnd.Next(100,800);
+			
+			EllipseShape ellipse = new EllipseShape(new Rectangle(x,y,100,200));
+			ellipse.FillColor = selectedFillColor;
+			ellipse.StrokeColor = selectedStrokeColor; 
+			ellipse.StrokeWidth = 3;
+			ellipse.Opacity = selectedOpacityValue;
+			ellipse.ShapeBrush = new SolidBrush(Color.FromArgb(ellipse.Opacity, ellipse.FillColor));
+			ellipse.ShapePen = new Pen(ellipse.StrokeColor, ellipse.StrokeWidth);
+			ShapeList.Add(ellipse);
+		}
+		
+
+		public void AddRandomCircle()
+		{
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 800);
+
+			CircleShape circle = new CircleShape(new Rectangle(x, y, 200, 200));
+			
+			circle.FillColor = selectedFillColor;
+			circle.StrokeColor = selectedStrokeColor;
+			circle.StrokeWidth = 4;
+			circle.Opacity = selectedOpacityValue;
+			circle.ShapeBrush = new SolidBrush(Color.FromArgb(circle.Opacity, circle.FillColor));
+
+			ShapeList.Add(circle);
+		}
+
+		public void AddRandomLine()
+		{
+
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 800);
+
+			LineShape newLine = new LineShape(new Rectangle(x, y, 300, 300));
+			newLine.Opacity = selectedOpacityValue;
+			newLine.FillColor = Color.FromArgb(newLine.Opacity, selectedFillColor);
+			newLine.StrokeWidth = 3;
+			ShapeList.Add(newLine);
+		}
+
+		public void AddRandomPoint()
+        {
+			Random rnd = new Random();
+			int x = rnd.Next(100, 1000);
+			int y = rnd.Next(100, 800);
+			PointShape p = new PointShape(new Rectangle(x, y, 5, 5));
+			p.Opacity = selectedOpacityValue;
+			p.FillColor = selectedFillColor;
+			p.ShapeBrush = new SolidBrush(Color.FromArgb(p.Opacity, p.FillColor));
+			ShapeList.Add(p);
+
+		}
+
+
+		public Shape ContainsPoint(PointF point)
+		{
+			for(int i = ShapeList.Count - 1; i >= 0; i--){
+				if (ShapeList[i].Contains(point)){
+					ShapeList[i].FillColor = Color.Red;
+						
+					return ShapeList[i];
+				}	
+			}
+			return null;
+		}
+		
+		/// <summary>
+		/// Транслация на избраният елемент на вектор определен от <paramref name="p>p</paramref>
+		/// </summary>
+		/// <param name="p">Вектор на транслация.</param>
+		public void TranslateTo(PointF p)
+		{
+			foreach(var item in Selection) { 
+				item.Location = new PointF(item.Location.X + p.X - lastLocation.X, item.Location.Y + p.Y - lastLocation.Y);
+				
+				
+			}
+			lastLocation = p;
+		}
+		/// <summary>
+		/// Завъртане на примитива
+		/// </summary>
+		public void Rotate()
+		{
+			foreach(var item in Selection)
+            {
+				if (selection != null)
+				{
+					item.ShapeAngle += 45;
+				}
+				else
+				{
+					MessageBox.Show("Please select an element to rotate.");
+				}
+			}
+		
+		}
+	}
+}

@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "b7a9a968-de7b-4537-9423-9d8ed1a72bf9": {
+      "ProjectGuid": "b7a9a968-de7b-4537-9423-9d8ed1a72bf9",
+      "DisplayName": "Draw",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}
